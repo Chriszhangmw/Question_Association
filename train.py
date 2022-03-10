@@ -5,16 +5,18 @@ from transformers import BertModel, BertTokenizer
 from tqdm import tqdm
 import scipy.stats
 import pickle
-from utils import build_model, sents_to_vecs, compute_kernel_bias, save_whiten
+from utils import build_model, sents_to_vecs, compute_kernel_bias, save_whiten,transform_and_normalize
+import pickle
+
 
 
 NLI_PATH = '/home/zmw/projects/question_matching/sourceData/data_engineering/train_eda_t_ratio_bak.csv'
 
 MODEL_NAME_LIST = [
-    '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-base-uncased',
-    '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-large-uncased',
-    '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-base-nli-mean-tokens',
-    '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-large-nli-mean-tokens'
+    # '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-base-uncased',
+    # '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-large-uncased',
+    '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-base-nli-mean-tokens'
+    # '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-large-nli-mean-tokens'
 ]
 
 POOLING = 'first_last_avg'
@@ -57,8 +59,12 @@ def main():
         a_vecs_train = sents_to_vecs(a_sents_train, tokenizer, model, POOLING, MAX_LENGTH,device)
         b_vecs_train = sents_to_vecs(b_sents_train, tokenizer, model, POOLING, MAX_LENGTH,device)
 
+        # 存储检索的向量本身
+        sentence = np.append(a_sents_train,b_sents_train)
+        vectors = np.append(a_vecs_train,b_vecs_train)
+
         print("Compute kernel and bias.")
-        kernel, bias = compute_kernel_bias([a_vecs_train, b_vecs_train])
+        kernel, bias = compute_kernel_bias(vectors)
 
         model_name = MODEL_NAME.split('/')[-1]
         output_filename = f"{model_name}-{POOLING}-whiten(NLI).pkl"
@@ -67,6 +73,14 @@ def main():
         output_path = os.path.join(OUTPUT_DIR, output_filename)
         save_whiten(output_path, kernel, bias)
         print("Save to {}".format(output_path))
+
+        vector_sentence_path = os.path.join(OUTPUT_DIR, "vctors_sentence.pkl")
+        transfered_vec = transform_and_normalize(vectors,kernel, bias)
+        sentence_vector = {}
+        for s,v in zip(sentence,transfered_vec):
+            sentence_vector[s] = v
+        with open(vector_sentence_path, 'wb') as handle:
+            pickle.dump(sentence_vector, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
 
 if __name__ == "__main__":
