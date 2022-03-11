@@ -42,6 +42,7 @@ class PredictModel:
     def search(self,text,top=10,nprobe = 1000):
         self.index.nprobe = nprobe
         vec = self.vector_query(text)
+        vec = vec.astype("float32")
         start_time = time.time()
         D,I = self.index.search(vec,top)
         end_time = time.time()
@@ -59,11 +60,11 @@ class PredictModel:
 
 if __name__ == "__main__":
     model_path = '/home/zmw/big_space/zhangmeiwei_space/pre_models/pytorch/bert-base-nli-mean-tokens'
-    w_b_path = '/home/zmw/big_space/zhangmeiwei_space/nlp_out/bert_whiten/'
+    w_b_path = '/home/zmw/big_space/zhangmeiwei_space/nlp_out/bert_whiten/bert-base-nli-mean-tokens-first_last_avg-whiten(NLI).pkl'
     pkl_path = '/home/zmw/big_space/zhangmeiwei_space/nlp_out/bert_whiten/vctors_sentence.pkl'
     index_path = '/home/zmw/big_space/zhangmeiwei_space/nlp_out/bert_whiten/faiss.index'
     predictor = PredictModel(model_path,w_b_path,pkl_path,index_path)
-    text = "我喜欢吃成都的火锅"
+    text = "我想要美女的微信"
     predictor.search(text)
 
 

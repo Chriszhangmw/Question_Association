@@ -62,7 +62,7 @@ def compute_kernel_bias(vecs, n_components=256):
     """计算kernel和bias
     最后的变换：y = (x + bias).dot(kernel)
     """
-    vecs = np.concatenate(vecs, axis=0)
+    # vecs = np.concatenate(vecs, axis=0)
     mu = vecs.mean(axis=0, keepdims=True)
     cov = np.cov(vecs.T)
     u, s, vh = np.linalg.svd(cov)
